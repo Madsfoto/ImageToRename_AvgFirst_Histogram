@@ -163,9 +163,10 @@ namespace ImageToRename_AvgFirst_Histogram
         static void Main(string[] args)
         {
             // Import bitmap
-            // Make histogram
+            // resize to 49 pixels, 7x7
+            // Make histogram, crushed to 2 digits all the time
             // rename the input with "average number" "-" "histogram"
-
+            // 
 
         }
     }
