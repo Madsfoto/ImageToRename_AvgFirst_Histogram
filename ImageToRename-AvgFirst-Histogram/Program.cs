@@ -10,8 +10,14 @@ namespace ImageToRename_AvgFirst_Histogram
     class Program
     {
         // Resize
+        Bitmap Resize(Bitmap bm, int Size)
+        {
 
-        // make histogram
+
+            return bm;
+        }
+
+        // make array of grayscale values. use it now to crush + for later for averaging work. 
         public int[] GrayscaleToArray(Bitmap bm)
         {
             // Rationale: 
@@ -70,7 +76,7 @@ namespace ImageToRename_AvgFirst_Histogram
         }
 
 
-
+        // Get the different average numbers
         public int AverageSum(int[] averageArrayData)
         {
             int average = averageArrayData.Sum() / averageArrayData.Count();
@@ -79,7 +85,7 @@ namespace ImageToRename_AvgFirst_Histogram
             return average;
         }
 
-        public int WeightedSumEights(int[] averageArrayData) // Split into 1/8's, exposure is 3/8's, rest 1/8
+        public int WeightedSumEights(int[] averageArrayData) // Split into 1/8's, exposure is 4/8's, rest 1/8
         {
             double factor = (1d / 8);
             int max = 256;
@@ -130,31 +136,7 @@ namespace ImageToRename_AvgFirst_Histogram
             return sum;
         }
         
-        public int GeoMean(int[] averageArrayData) // Geometric mean of the sum
-        {
-
-            double sum = 1.0;
-
-            foreach (int value in averageArrayData)
-            {
-                if (value != 0)
-                {
-                    double valdb = value * 1.0;
-
-                    sum = sum * Math.Pow(valdb, (1.0 / averageArrayData.Length));  // Works because of Indicies rule 4: (a*b)^n = a^n*b^n
-                }
-                else // meaning that if value IS 0, we can not use the information because of multiplication rules
-                {
-
-                }
-            }
-
-
-
-            return (int)sum;
-        }
-
-        int WeightedSumBridge(int[] averageArrayData) // Split into the sections that Bridge has (probably more correct)
+        public int WeightedSumBridge(int[] averageArrayData) // Split into the sections that Bridge has (probably more correct)
         {
             int max = 256;
 
@@ -203,6 +185,35 @@ namespace ImageToRename_AvgFirst_Histogram
             return sum;
         }
 
+        public int GeoMean(int[] averageArrayData) // Geometric mean of the sum
+        {
+
+            double sum = 1.0;
+
+            foreach (int value in averageArrayData)
+            {
+                if (value != 0)
+                {
+                    double valdb = value * 1.0;
+
+                    sum = sum * Math.Pow(valdb, (1.0 / averageArrayData.Length));  // Works because of Indicies rule 4: (a*b)^n = a^n*b^n
+                }
+                else // meaning that if value IS 0, we can not use the information because of multiplication rules
+                {
+
+                }
+            }
+
+
+
+            return (int)sum;
+        }
+
+
+        // Rename to the spec of *AVERAGE*-*CRUSHED_ARRAY*
+
+
+
 
         static void Main(string[] args)
         {
@@ -214,9 +225,13 @@ namespace ImageToRename_AvgFirst_Histogram
             Program p = new Program();
             string bmStr = args[0];
             Bitmap bm = new Bitmap(bmStr);
-            Bitmap bmResized = p.Resize(bm);
+            Bitmap bmResized = p.Resize(bm, 7);
             int[] bmIntArr = p.GrayscaleToArray(bmResized);
             string crushed = p.CrushedInts(bmIntArr);
+            int averageSum = p.AverageSum(bmIntArr);
+            int weightedSumEights = p.WeightedSumEights(bmIntArr);
+            int weightedSumBridge = p.WeightedSumBridge(bmIntArr);
+            int geoMean = p.GeoMean(bmIntArr);
 
         }
     }
