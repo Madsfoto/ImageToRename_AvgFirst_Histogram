@@ -3,11 +3,53 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using System.Drawing;
 
 namespace ImageToRename_AvgFirst_Histogram
 {
     class Program
     {
+        // Resize
+
+        // make histogram
+        public int[] GrayscaleToArray(Bitmap bm)
+        {
+            // Rationale: 
+            // The reason this function is not two functions is two fold: 
+            // 1: I can't figure out how to get the grayScaleInt value out from a Color object _and_
+            // 2: Here it makes sense to have the grayscale conversion (as it's one line) as well as writing the values to an array.
+
+            int i = 0;
+            int[] grayArray = new int[200];
+
+            for (int y = 0; y < bm.Height; y++)
+            {
+                for (int x = 0; x < bm.Width; x++)
+                {
+                    //get the pixel from the original image
+                    Color c = bm.GetPixel(x, y);
+
+                    //create the grayscale version of the pixel
+                    int grayScaleInt = (int)Math.Sqrt(c.R * c.R * .241 + c.G * c.G * .691 + c.B * c.B * .068);
+
+                    // set the array as the grayscale int
+                    grayArray[i] = grayScaleInt;
+
+                    i++;
+
+
+
+
+
+                }
+            }
+
+            return grayArray;
+
+
+        }
+
+        // Crush the ints into the 10-99 range
         public string CrushedInts(int[] averageArrayData)
         {
             int[] crushedArr = new int[256];
@@ -26,6 +68,8 @@ namespace ImageToRename_AvgFirst_Histogram
             Console.WriteLine(output);
             return output;
         }
+
+
 
         public int AverageSum(int[] averageArrayData)
         {
@@ -167,6 +211,12 @@ namespace ImageToRename_AvgFirst_Histogram
             // Make histogram, crushed to 2 digits all the time
             // rename the input with "average number" "-" "histogram"
             // 
+            Program p = new Program();
+            string bmStr = args[0];
+            Bitmap bm = new Bitmap(bmStr);
+            Bitmap bmResized = p.Resize(bm);
+            int[] bmIntArr = p.GrayscaleToArray(bmResized);
+            string crushed = p.CrushedInts(bmIntArr);
 
         }
     }
