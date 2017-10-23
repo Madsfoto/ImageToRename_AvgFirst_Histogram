@@ -4,18 +4,30 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.Drawing;
+using System.Drawing.Drawing2D;
+using System.IO;
 
 namespace ImageToRename_AvgFirst_Histogram
 {
     class Program
     {
         // Resize
-        Bitmap Resize(Bitmap bm, int Size)
+        public Bitmap Resize(Bitmap image, int new_width)
         {
-
-
-            return bm;
+            Bitmap new_image = new Bitmap(new_width, new_width);
+            Graphics graphics = Graphics.FromImage(new_image);
+            
+            graphics.InterpolationMode = InterpolationMode.HighQualityBicubic;
+            graphics.CompositingMode = CompositingMode.SourceCopy;
+            graphics.CompositingQuality = CompositingQuality.HighQuality;
+            graphics.SmoothingMode = SmoothingMode.HighQuality;
+            graphics.PixelOffsetMode = PixelOffsetMode.HighQuality;
+            graphics.DrawImage(image, 0, 0, new_width, new_width);
+            graphics.Dispose();
+            
+            return new_image;
         }
+        
 
         // make array of grayscale values. use it now to crush + for later for averaging work. 
         public int[] GrayscaleToArray(Bitmap bm)
@@ -26,7 +38,7 @@ namespace ImageToRename_AvgFirst_Histogram
             // 2: Here it makes sense to have the grayscale conversion (as it's one line) as well as writing the values to an array.
 
             int i = 0;
-            int[] grayArray = new int[200];
+            int[] grayArray = new int[49];
 
             for (int y = 0; y < bm.Height; y++)
             {
@@ -54,24 +66,30 @@ namespace ImageToRename_AvgFirst_Histogram
 
 
         }
-
+        
         // Crush the ints into the 10-99 range
-        public string CrushedInts(int[] averageArrayData)
+        public int[] CrushInts(int[] InputArr)
         {
-            int[] crushedArr = new int[256];
-            for (int i = 0; i < averageArrayData.Length; i++)
+            int[] crushedArr = new int[InputArr.Length];
+            for (int i = 0; i < InputArr.Length; i++)
             {
-                crushedArr[i] = (int)((averageArrayData[i] / (254 / 89f)) + 10);    // ugly code. Should be 255/89, but then it gets trunciated from 2.876404494 to 2 
+                crushedArr[i] = (int)((InputArr[i] / (254 / 89f)) + 10);    // ugly code. Should be 255/89, but then it gets trunciated from 2.876404494 to 2 
                                                                                     // and gives wrong results. 255*(255/89f) is 98 so I'm not filling the range properly.
                                                                                     // so the answer was 254/89f. Would 253/89f give better results? To be tested!
             }
+            return crushedArr;
+        }
+
+        // Crush the ints into the 10-99 range
+        public string CrushedString(int[] InputArr)
+        {
             string output = "";
-            for (int i = 0; i < crushedArr.Length; i++)
+            for (int i = 0; i < InputArr.Length; i++)
             {
-                output += crushedArr[i].ToString() + ", ";
+                //output += crushedArr[i].ToString() + ", "; // Gives "xx, xx, xx, "
+                output += InputArr[i].ToString();
             }
 
-            Console.WriteLine(output);
             return output;
         }
 
@@ -143,10 +161,10 @@ namespace ImageToRename_AvgFirst_Histogram
             double blacksdbl, shadowsdbl, highlightsdbl, whihtesdbl;
 
             int blacksInt = 26;
-            blacksdbl = whihtesdbl = (blacksInt / max); // should be 0,1015625
-
+            blacksdbl = whihtesdbl = ((double)blacksInt / max); // should be 0,1015625
+            
             int shadowsInt = blacksInt + 60;
-            shadowsdbl = highlightsdbl = (shadowsInt / max); // should be 0,234375
+            shadowsdbl = highlightsdbl = ((double)shadowsInt / max); // should be 0,234375
 
             int exposureInt = blacksInt + shadowsInt + 85;
             double exposuredbl = 1 - (blacksdbl + whihtesdbl + shadowsdbl + highlightsdbl); // should be 0,328125
@@ -209,8 +227,21 @@ namespace ImageToRename_AvgFirst_Histogram
             return (int)sum;
         }
 
+        public string CreateOutput(int Average, string Array)
+        {
+            string output = Average.ToString() + "-" + Array + ".jpg";
 
-        // Rename to the spec of *AVERAGE*-*CRUSHED_ARRAY*
+            return output;
+        }
+
+        public void Rename(string input, string output)
+        {
+            Console.WriteLine(output);
+            File.Move(input, output);
+            
+        }
+
+        
 
 
 
@@ -219,19 +250,38 @@ namespace ImageToRename_AvgFirst_Histogram
         {
             // Import bitmap
             // resize to 49 pixels, 7x7
-            // Make histogram, crushed to 2 digits all the time
-            // rename the input with "average number" "-" "histogram"
+            // Make histogram, crushed to 2 digits for all the values
+            // rename the input with "average number" + "-" + "CrushedHistogram"+".jpg"
             // 
+
             Program p = new Program();
             string bmStr = args[0];
+            
             Bitmap bm = new Bitmap(bmStr);
             Bitmap bmResized = p.Resize(bm, 7);
+            
             int[] bmIntArr = p.GrayscaleToArray(bmResized);
-            string crushed = p.CrushedInts(bmIntArr);
-            int averageSum = p.AverageSum(bmIntArr);
-            int weightedSumEights = p.WeightedSumEights(bmIntArr);
-            int weightedSumBridge = p.WeightedSumBridge(bmIntArr);
-            int geoMean = p.GeoMean(bmIntArr);
+            int[] CrushedIntArr = p.CrushInts(bmIntArr);
+            bmResized.Dispose();
+            bm.Dispose();
+
+            string crushed = p.CrushedString(CrushedIntArr);
+            //Console.WriteLine("Crushed = " + crushed);
+
+            int averageSum = p.AverageSum(CrushedIntArr);
+            //Console.WriteLine("Average = " + averageSum);
+
+            int weightedSumEights = p.WeightedSumEights(CrushedIntArr);
+            //Console.WriteLine("weightedSum8 = " + weightedSumEights);
+
+            int weightedSumBridge = p.WeightedSumBridge(CrushedIntArr);
+            //Console.WriteLine("Bridge = " + weightedSumBridge);
+
+            int geoMean = p.GeoMean(CrushedIntArr);
+            //Console.WriteLine("Geomean = " + geoMean);
+
+            string output = p.CreateOutput(averageSum, crushed);
+            p.Rename(bmStr, output);
 
         }
     }
