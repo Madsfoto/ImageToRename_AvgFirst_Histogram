@@ -16,7 +16,12 @@ namespace ImageToRename_AvgFirst_Histogram
         {
             Bitmap new_image = new Bitmap(new_width, new_width);
             Graphics graphics = Graphics.FromImage(new_image);
+
+            // I went through every resizing project on github, everything that did not use magick.net or openCV used this form of resizing, 
+            // the settings in here are the maximum quality presets.
+            // Documentation: https://docs.microsoft.com/da-dk/dotnet/api/system.drawing.drawing2d?view=netframework-4.7.1
             
+
             graphics.InterpolationMode = InterpolationMode.HighQualityBicubic;
             graphics.CompositingMode = CompositingMode.SourceCopy;
             graphics.CompositingQuality = CompositingQuality.HighQuality;
@@ -252,7 +257,7 @@ namespace ImageToRename_AvgFirst_Histogram
             // resize to 49 pixels, 7x7
             // Make histogram, crushed to 2 digits for all the values
             // rename the input with "average number" + "-" + "CrushedHistogram"+".jpg"
-            // 
+            
 
             Program p = new Program();
             string bmStr = args[0];
@@ -264,6 +269,10 @@ namespace ImageToRename_AvgFirst_Histogram
             int[] CrushedIntArr = p.CrushInts(bmIntArr);
             bmResized.Dispose();
             bm.Dispose();
+            // Finished with the raw source files, everything is now a result of using the source files
+
+            // I use the crushed array (crushed in the sense that it can only go from 10 to 99), as basis for the averaging functions. 
+            // Because it is the best way to have a meaningful average of how bright the image actaully is. 
 
             string crushed = p.CrushedString(CrushedIntArr);
             //Console.WriteLine("Crushed = " + crushed);
