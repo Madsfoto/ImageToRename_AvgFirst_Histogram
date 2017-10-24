@@ -85,7 +85,7 @@ namespace ImageToRename_AvgFirst_Histogram
             return crushedArr;
         }
 
-        // Crush the ints into the 10-99 range
+        // Take the crushed ints and create a string from it for renaming purposes
         public string CrushedString(int[] InputArr)
         {
             string output = "";
@@ -208,7 +208,7 @@ namespace ImageToRename_AvgFirst_Histogram
             return sum;
         }
 
-        public int GeoMean(int[] averageArrayData) // Geometric mean of the sum
+        public int GeoMean(int[] averageArrayData) // Geometric mean of the sum, see https://en.wikipedia.org/wiki/Geometric_mean
         {
 
             double sum = 1.0;
@@ -246,7 +246,26 @@ namespace ImageToRename_AvgFirst_Histogram
             
         }
 
-        
+        public void Run(string input, int[] CrushedIntArr)
+        {
+            string crushed = CrushedString(CrushedIntArr);
+            //Console.WriteLine("Crushed = " + crushed);
+
+            int averageSum = AverageSum(CrushedIntArr);
+            //Console.WriteLine("Average = " + averageSum);
+
+            int weightedSumBridge = WeightedSumBridge(CrushedIntArr);
+            //Console.WriteLine("Bridge = " + weightedSumBridge);
+
+            int geoMean = GeoMean(CrushedIntArr);
+            //Console.WriteLine("Geomean = " + geoMean);
+
+            //string output = CreateOutput(averageSum, crushed);
+            string output = CreateOutput(geoMean, crushed);
+            //string output = CreateOutputArrOnly(crushed);
+            Rename(input, output);
+
+        }
 
 
 
@@ -260,38 +279,39 @@ namespace ImageToRename_AvgFirst_Histogram
             
 
             Program p = new Program();
-            string bmStr = args[0];
+            string SearchPattern = "*.jpg";
+
+            // for all the jpg files, do rename in increasing number, with padding
+            // step 1: Find all jpg's in the current folder
+
+            // method for getting current directory 
+            string Dir = Directory.GetCurrentDirectory();
+
+
+            // method for getting all the files in the current directory with the extention
+            string[] files = Directory.GetFiles(Dir, SearchPattern);
+
+            // Making the renaming on all jpg's in the current folder. 
+
+            foreach (string fileName in files)
+            {
+                Bitmap bm = new Bitmap(fileName);
+                Bitmap bmResized = p.Resize(bm, 7); // If the size is changed, make sure to change the resulting arrays!
+                int[] bmIntArr = p.GrayscaleToArray(bmResized);
+                int[] CrushedIntArr = p.CrushInts(bmIntArr);
+                bmResized.Dispose();
+                bm.Dispose();
+                // Finished with the raw source files, everything is now a result of using the source files
+                p.Run(fileName, CrushedIntArr);
+
+            }
+
             
-            Bitmap bm = new Bitmap(bmStr);
-            Bitmap bmResized = p.Resize(bm, 7);
-            
-            int[] bmIntArr = p.GrayscaleToArray(bmResized);
-            int[] CrushedIntArr = p.CrushInts(bmIntArr);
-            bmResized.Dispose();
-            bm.Dispose();
-            // Finished with the raw source files, everything is now a result of using the source files
 
             // I use the crushed array (crushed in the sense that it can only go from 10 to 99), as basis for the averaging functions. 
             // Because it is the best way to have a meaningful average of how bright the image actaully is. 
 
-            string crushed = p.CrushedString(CrushedIntArr);
-            //Console.WriteLine("Crushed = " + crushed);
-
-            int averageSum = p.AverageSum(CrushedIntArr);
-            //Console.WriteLine("Average = " + averageSum);
-
-            int weightedSumEights = p.WeightedSumEights(CrushedIntArr);
-            //Console.WriteLine("weightedSum8 = " + weightedSumEights);
-
-            int weightedSumBridge = p.WeightedSumBridge(CrushedIntArr);
-            //Console.WriteLine("Bridge = " + weightedSumBridge);
-
-            int geoMean = p.GeoMean(CrushedIntArr);
-            //Console.WriteLine("Geomean = " + geoMean);
-
-            string output = p.CreateOutput(averageSum, crushed);
-            p.Rename(bmStr, output);
-
+            
         }
     }
 }
